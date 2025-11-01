@@ -6,7 +6,13 @@
     "rollup": "rollup -c",
     "build": "rollup -c --bundleConfigAsCjs"
   },
-  "keywords": ["react", "component", "frontend", "Digipodium", "Digipod"],
+  "keywords": [
+    "react",
+    "component",
+    "frontend",
+    "Digipodium",
+    "Digipod"
+  ],
   "author": "Mohammad Mubassir",
   "license": "ISC",
   "devDependencies": {
@@ -32,6 +38,7 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "dependencies": {
+    "socket.io-client": "^4.8.1",
     "tslib": "^2.6.2"
   }
 }
