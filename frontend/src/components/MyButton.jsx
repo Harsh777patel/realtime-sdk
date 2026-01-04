@@ -9,6 +9,7 @@ const MyButton = ({ text, primary }) => {
     >
       {text}
     </button>
+    
   );
 };
 

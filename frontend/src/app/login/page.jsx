@@ -2,6 +2,8 @@
 import { useFormik } from 'formik';
 import React from 'react';
 import * as Yup from 'yup';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 // ✅ Validation Schema for Login
 const LoginSchema = Yup.object().shape({
@@ -20,6 +22,15 @@ const Login = () => {
     onSubmit: (values) => {
       console.log(values);
       // send values to backend for authentication
+      axios.post('http://localhost:5000/api/users/login', values)
+        .then((result) => {
+          console.log(result.status);
+          toast.success('Login successfully');
+          localStorage.setItem('token', result.data.token);
+        }).catch((err) => {
+          console.log(err);
+          toast.error('Something went wrong')
+        });
     },
     validationSchema: LoginSchema
   });

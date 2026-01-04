@@ -28,8 +28,10 @@ const Navbar = () => {
       <Link href='/contact' className="mr-5 hover:text-gray-900">Contact </Link>
 
     </nav>
-    <button className="inline-flex items-center bg-gray-100 border-0 py-1 px-3 focus:outline-none hover:bg-gray-200 rounded text-base mt-4 md:mt-0">
-      Button
+        <a href="/apikeymanager">
+
+    <button className="inline-flex items-center bg-blue-600 border-0 py-1 px-3 focus:outline-none hover:bg-blue-800 rounded-lg text-white mt-4 md:mt-0">
+      API keys
       <svg
         fill="none"
         stroke="currentColor"
@@ -42,6 +44,7 @@ const Navbar = () => {
         <path d="M5 12h14M12 5l7 7-7 7" />
       </svg>
     </button>
+    </a>
   </div>
 </header>
 
