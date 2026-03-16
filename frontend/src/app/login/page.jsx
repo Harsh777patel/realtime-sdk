@@ -4,6 +4,7 @@ import React from 'react';
 import * as Yup from 'yup';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 // ✅ Validation Schema for Login
 const LoginSchema = Yup.object().shape({
@@ -12,6 +13,7 @@ const LoginSchema = Yup.object().shape({
 });
 
 const Login = () => {
+  const router = useRouter();
 
   // Step-1 : initialization
   const loginForm = useFormik({
@@ -19,18 +21,22 @@ const Login = () => {
       email: '',
       password: ''
     },
-    onSubmit: (values) => {
-      console.log(values);
-      // send values to backend for authentication
-      axios.post('http://localhost:5000/api/users/login', values)
-        .then((result) => {
-          console.log(result.status);
-          toast.success('Login successfully');
+    onSubmit: async (values) => {
+      try {
+        const result = await axios.post('http://localhost:5000/api/users/login', values);
+        console.log('login response', result.status, result.data);
+        if (result?.data?.token) {
+          toast.success('Login successful');
           localStorage.setItem('token', result.data.token);
-        }).catch((err) => {
-          console.log(err);
-          toast.error('Something went wrong')
-        });
+          router.push('/userdashboard');
+        } else {
+          toast.error(result?.data?.message || 'Login failed: no token returned');
+          console.error('No token in login response', result.data);
+        }
+      } catch (err) {
+        console.error('Login error', err?.response?.data || err.message || err);
+        toast.error(err?.response?.data?.message || 'Something went wrong during login');
+      }
     },
     validationSchema: LoginSchema
   });

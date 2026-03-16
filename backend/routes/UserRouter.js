@@ -1,12 +1,15 @@
 import express from "express";
-import User from "../models/User.js";
+import User from "../models/UserModel.js";
 
-import { registerUser, loginUser } from "../controllers/userController.js";
+import { registerUser, loginUser, getAllUsers, getUserCount, deleteUser } from "../controllers/userController.js";
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.get("/all", getAllUsers);
+router.get("/count", getUserCount);
+router.delete("/:id", deleteUser);
 
 
 // GET profile

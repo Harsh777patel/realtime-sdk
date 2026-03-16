@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import http from "http";
 import cors from "cors";
@@ -5,7 +8,7 @@ import { Server } from "socket.io";
 import apiKeyRoutes from "./routes/apiKeyroutes.js";
 import userRoutes from "./routes/UserRouter.js";
 import { validateApiKey } from "./controllers/apiKeyController.js";
-// import connection from "./connection.js";
+import connection from "./connection.js";
 
 const app = express();
 
@@ -15,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database connection
-// connection();
+connection();
 
 // Routes
 app.use("/api/keys", apiKeyRoutes);
@@ -88,7 +91,7 @@ io.on("connection", (socket) => {
   socket.on("whiteboard-clear", () => {
     socket.broadcast.emit("whiteboard-clear");
   });
-  
+
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
   });
@@ -99,6 +102,6 @@ server.listen(PORT, () => console.log(`🚀 Server running at http://localhost:$
 
 // Error handling
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ success: false, message: 'Server error' });
+  console.error(err.stack);
+  res.status(500).json({ success: false, message: 'Server error' });
 });
