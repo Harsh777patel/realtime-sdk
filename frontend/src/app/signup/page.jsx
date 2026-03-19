@@ -6,24 +6,22 @@ import toast from 'react-hot-toast';
 import * as Yup from 'yup';
 
 const SignupSchema = Yup.object().shape({
-
   name: Yup.string()
     .min(2, 'Too Short!')
     .max(50, 'Too Long!')
     .required('Required'),
   email: Yup.string().email('Invalid email').required('Required'),
   password: Yup.string().required('Password is required')
-  .matches(/[A-Z]/, 'Must contain at least one uppercase letter')
-  .matches(/[a-z]/, 'Must contain at least one lowercase letter')
-  .matches(/[0-9]/, 'Must contain at least one number')
-  .matches(/\W/, 'Must contain at least one special character'),
-confirmPassword: Yup.string().required('Confirm Password is required')
-  .oneOf([Yup.ref('password'), null], 'Passwords must match')
+    .matches(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .matches(/[a-z]/, 'Must contain at least one lowercase letter')
+    .matches(/[0-9]/, 'Must contain at least one number')
+    .matches(/\W/, 'Must contain at least one special character'),
+  confirmPassword: Yup.string().required('Confirm Password is required')
+    .oneOf([Yup.ref('password'), null], 'Passwords must match')
 });
 
 const Signup = () => {
 
-  // Step-1 : initialization
   const signupForm = useFormik({
     initialValues: {
       name: '',
@@ -33,15 +31,14 @@ const Signup = () => {
     },
     onSubmit: (values) => {
       console.log(values);
-      // send values backend
-axios.post('http://localhost:5000/user/add',values)
-.then((result) => {
-  console.log(result.status);
-  toast.success('User register successfully')
-}).catch((err) => {
-  console.log(err);   
-toast.error('Something went wrong')
-});
+      axios.post('http://localhost:5000/api/users/register', values)
+        .then((result) => {
+          console.log(result.status);
+          toast.success('User registered successfully')
+        }).catch((err) => {
+          console.log(err);
+          toast.error('Something went wrong')
+        });
     },
     validationSchema: SignupSchema
   });

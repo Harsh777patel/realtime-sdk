@@ -1,17 +1,16 @@
-const mongoose = require('mongoose');
-const url = "mongodb+srv://harsh:royalharsh4004@cluster0.i6jxwnb.mongodb.net/mydb?retryWrites=true&w=majority&appName=Cluster0"
+import mongoose from "mongoose";
 
-mongoose.connect(url)
+const url = "mongodb+srv://harsh:royalharsh4004@cluster0.i6jxwnb.mongodb.net/mydb?retryWrites=true&w=majority&appName=Cluster0";
 
-    .then((result) => {
-        console.log('database connected');
+const connection = () => {
+    mongoose
+        .connect(url)
+        .then(() => {
+            console.log("database connected");
+        })
+        .catch((err) => {
+            console.error(err);
+        });
+};
 
-    })
-    .catch((err) => {
-        console.log(err);
-
-
-    });
-
-
-module.exports = mongoose;
+export default connection;

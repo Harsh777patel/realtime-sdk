@@ -1,11 +1,17 @@
-const { Schema, model } = require('../connection');
+import mongoose from "mongoose";
 
-const mySchema = new Schema({
-    name: String,
-    email: { type: String, unique: true, required: true },
-    password: { type: String, required: true },
-    city:{type:String, default: 'unknown'},
-    createdAt: { type: Date, default: Date.now }
+const mySchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ["user", "admin"], default: "user" },
+  city: { type: String, default: "unknown" },
+  createdAt: { type: Date, default: Date.now },
+  phone: String,
+  location: String,
+  about: String,
+  skills: String,
+
 });
 
-module.exports = model('user', mySchema);
+export default mongoose.model("user", mySchema);

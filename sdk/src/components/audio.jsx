@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5000");
-
 const AudioCall = () => {
   const [inCall, setInCall] = useState(false);
   const [isCaller, setIsCaller] = useState(false);
@@ -12,8 +10,23 @@ const AudioCall = () => {
   const peerConnectionRef = useRef(null);
   const analyserRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
+    const apiKey = localStorage.getItem("apiKey");
+    if (!apiKey) return;
+
+    const socketInstance = io("http://localhost:5000", {
+      auth: { apiKey }
+    });
+    setSocket(socketInstance);
+
+    return () => socketInstance.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
     socket.on("offer", async (offer) => {
       peerConnectionRef.current = createPeerConnection();
       await peerConnectionRef.current.setRemoteDescription(offer);
@@ -43,7 +56,7 @@ const AudioCall = () => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, []);
+  }, [socket]);
 
   const setupAudioAnalyser = (stream) => {
     const audioContext = new AudioContext();

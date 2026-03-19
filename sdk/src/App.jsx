@@ -5,6 +5,8 @@ import VideoCall from "./components/video";
 import Broadcast from "./components/broadcast";
 import LiveStreaming from "./components/live_streaming";
 import Whiteboard from "./components/whiteboard";
+import ApiKeyManager from "./components/ApiKeyManager";
+
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/broadcast" element={<Broadcast />} />
         <Route path="/live_streaming" element={<LiveStreaming />} />
         <Route path="/whiteboard" element={<Whiteboard />} />
+                <Route path="/apikeymanager" element={<ApiKeyManager />} />
+
       </Routes>
     </Router>
   );

@@ -1,16 +1,29 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5000");
-
 const VideoCall = () => {
   const [inCall, setInCall] = useState(false);
   const [isCaller, setIsCaller] = useState(false);
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
+    const apiKey = localStorage.getItem("apiKey");
+    if (!apiKey) return;
+
+    const socketInstance = io("http://localhost:5000", {
+      auth: { apiKey },
+    });
+    setSocket(socketInstance);
+
+    return () => socketInstance.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
     socket.on("offer", async (offer) => {
       peerConnectionRef.current = createPeerConnection();
 
@@ -52,7 +65,7 @@ const VideoCall = () => {
       socket.off("answer");
       socket.off("candidate");
     };
-  }, []);
+  }, [socket]);
 
   const createPeerConnection = () => {
     const pc = new RTCPeerConnection();
