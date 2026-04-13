@@ -28,7 +28,7 @@ const Login = () => {
         if (result?.data?.token) {
           toast.success('Login successful');
           localStorage.setItem('token', result.data.token);
-          router.push('/userdashboard');
+          router.push('/user/dashboard');
         } else {
           toast.error(result?.data?.message || 'Login failed: no token returned');
           console.error('No token in login response', result.data);

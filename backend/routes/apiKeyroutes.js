@@ -3,18 +3,18 @@ import {
   createApiKey,
   getApiKeys,
   deleteApiKey,
-  validateApiKey,
+  validateKeyController,
 } from "../controllers/apikeycontroller.js";
-import { apikeyAuth } from "../middleware/apikeyAuth.js";
+import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // Authenticated user routes
-router.post("/", apikeyAuth, createApiKey);
-router.get("/", apikeyAuth, getApiKeys);
-router.delete("/:id", apikeyAuth, deleteApiKey);
+router.post("/", verifyToken, createApiKey);
+router.get("/", verifyToken, getApiKeys);
+router.delete("/:id", verifyToken, deleteApiKey);
 
 // Public API validation
-router.post("/validate-key", validateApiKey);
+router.post("/validate-key", validateKeyController);
 
 export default router;

@@ -1,103 +1,92 @@
-import React, { useEffect, useState, useRef } from 'react'
-import io from 'socket.io-client';
+import React, { useEffect, useRef, useState } from "react";
+import io, { Socket } from "socket.io-client";
+import { Message } from "../types";
 
-const Chat = () => {
-    const [socket, setSocket] = useState(io('http://localhost:5000', { autoConnect: false }));
-    const [messages, setMessages] = useState<{ text: string; type: 'sent' | 'received' }[]>([]);
-    const [input, setInput] = useState('');
-    const chatEndRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        socket.connect();
-        socket.on('rec-message', (msg) => {
-            setMessages(prev => [...prev, { text: msg, type: 'received' }]);
-        });
-
-        return () => {
-            socket.off('rec-message');
-            socket.disconnect();
-        };
-    }, [socket]);
-
-    useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    const sendMessage = (e: any) => {
-        e.preventDefault();
-        if (input.trim()) {
-            socket.emit('send-message', input);
-            setMessages(prev => [...prev, { text: input, type: 'sent' }]);
-            setInput('');
-        }
-    };
-
-    return (
-        <div style={{ maxWidth: 500, margin: '20px auto', border: '2px solid #ccc', padding: 16, borderRadius: 8, fontFamily: "Arial, sans-serif" }}>
-            <h2 style={{ textAlign: 'center', marginBottom: 12 }}>Chats</h2>
-
-            {/* Chat messages box */}
-            <div style={{
-                height: 300,
-                overflowY: 'auto',
-                marginBottom: 16,
-                background: '#f4f4f4',
-                padding: 8,
-                borderRadius: 13,
-                display: 'flex',
-                flexDirection: 'column'
-            }}>
-                {messages.map((msg, idx) => (
-                    <div
-                        key={idx}
-                        style={{
-                            alignSelf: msg.type === 'sent' ? 'flex-end' : 'flex-start',
-                            background: msg.type === 'sent' ? '#0084ff' : '#e9ecef',
-                            color: msg.type === 'sent' ? '#fff' : '#000',
-                            padding: '8px 12px',
-                            borderRadius: 16,
-                            margin: '4px 0',
-                            maxWidth: '70%',
-                            wordBreak: 'break-word',
-                        }}
-                    >
-                        {msg.text}
-                    </div>
-                ))}
-                <div ref={chatEndRef} />
-            </div>
-
-            {/* Input form */}
-            <form onSubmit={sendMessage} style={{ display: 'flex', gap: 8 }}>
-                <input
-                    type="text"
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    style={{
-                        flex: 1,
-                        padding: 10,
-                        borderRadius: 20,
-                        border: '1px solid #ccc',
-                        outline: 'none'
-                    }}
-                    placeholder="Type a message..."
-                />
-                <button
-                    type="submit"
-                    style={{
-                        padding: '10px 18px',
-                        borderRadius: 20,
-                        background: '#0084ff',
-                        color: '#fff',
-                        border: 'none',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Send
-                </button>
-            </form>
-        </div>
-    );
+interface Props {
+  apiKey: string;
+  userId: string;
+  name?: string;
+  serverUrl?: string;
+  roomId?: string;
 }
+
+const Chat: React.FC<Props> = ({
+  apiKey,
+  userId,
+  name = "Guest",
+  serverUrl = "http://localhost:5000",
+  roomId = "default",
+}) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+
+  const socketRef = useRef<Socket | null>(null);
+  const endRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect((): any => {
+    const socket = io(serverUrl, {
+      auth: { apiKey, userId, name, roomId },
+    });
+
+    socketRef.current = socket;
+    socket.emit("join-room", { roomId, userId, name });
+
+    socket.on("rec-message", (msg: string) => {
+      const time = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      setMessages((p) => [...p, { text: msg, type: "received", time }]);
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const send = () => {
+    if (!input.trim()) return;
+
+    socketRef.current?.emit("send-message", input);
+
+    const time = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    setMessages((p) => [...p, { text: input, type: "sent", time }]);
+    setInput("");
+  };
+
+  return (
+    <div className="max-w-md mx-auto h-screen flex flex-col bg-gray-900 text-white">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.type === "sent" ? "justify-end" : "justify-start"}`}>
+            <div className="bg-gray-700 px-3 py-2 rounded-lg max-w-xs">
+              {m.text}
+              <div className="text-xs opacity-60 text-right">{m.time}</div>
+            </div>
+          </div>
+        ))}
+        <div ref={endRef} />
+      </div>
+
+      <div className="flex p-3 gap-2 bg-gray-800">
+        <input
+          className="flex-1 p-2 rounded-lg bg-gray-700 outline-none"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <button onClick={send} className="bg-blue-500 px-4 rounded-lg">
+          Send
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default Chat;

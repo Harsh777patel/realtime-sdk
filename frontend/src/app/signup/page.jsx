@@ -1,6 +1,7 @@
 'use client';
 import axios from 'axios';
 import { useFormik } from 'formik';
+import { useRouter } from 'next/navigation';
 import React from 'react'
 import toast from 'react-hot-toast';
 import * as Yup from 'yup';
@@ -22,6 +23,8 @@ const SignupSchema = Yup.object().shape({
 
 const Signup = () => {
 
+  const router = useRouter();
+
   const signupForm = useFormik({
     initialValues: {
       name: '',
@@ -34,7 +37,8 @@ const Signup = () => {
       axios.post('http://localhost:5000/api/users/register', values)
         .then((result) => {
           console.log(result.status);
-          toast.success('User registered successfully')
+          toast.success('User registered successfully');
+          router.push('/login');
         }).catch((err) => {
           console.log(err);
           toast.error('Something went wrong')

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
 import { RTCProps } from "../types";
 
-const VideoCall: React.FC<RTCProps> = ({
+const AudioCall: React.FC<RTCProps> = ({
   apiKey,
   userId,
   name = "Guest",
@@ -12,15 +12,12 @@ const VideoCall: React.FC<RTCProps> = ({
 }) => {
   const [inCall, setInCall] = useState(false);
 
-  const localVideoRef = useRef<HTMLVideoElement | null>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const peerRef = useRef<RTCPeerConnection | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const pendingCandidates = useRef<RTCIceCandidateInit[]>([]);
 
   useEffect((): any => {
-    if (!apiKey) return;
-
     const socket = io(serverUrl, {
       auth: { apiKey, userId, name, roomId },
     });
@@ -29,7 +26,7 @@ const VideoCall: React.FC<RTCProps> = ({
     socket.emit("join-room", { roomId, userId, name });
 
     return () => socket.disconnect();
-  }, [apiKey]);
+  }, []);
 
   useEffect(() => {
     const socket = socketRef.current;
@@ -40,11 +37,8 @@ const VideoCall: React.FC<RTCProps> = ({
       peerRef.current = pc;
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
         audio: true,
       });
-
-      localVideoRef.current!.srcObject = stream;
 
       stream.getTracks().forEach((track) =>
         pc.addTrack(track, stream)
@@ -58,11 +52,6 @@ const VideoCall: React.FC<RTCProps> = ({
 
       socket.emit("answer", answer);
       setInCall(true);
-    });
-
-    socket.on("answer", async (answer: RTCSessionDescriptionInit) => {
-      await peerRef.current?.setRemoteDescription(answer);
-      await flushCandidates();
     });
 
     socket.on("candidate", async (candidate: RTCIceCandidateInit) => {
@@ -81,14 +70,8 @@ const VideoCall: React.FC<RTCProps> = ({
     const pc = new RTCPeerConnection({ iceServers });
 
     pc.ontrack = (e) => {
-      if (remoteVideoRef.current)
-        remoteVideoRef.current.srcObject = e.streams[0];
-    };
-
-    pc.onicecandidate = (e) => {
-      if (e.candidate) {
-        socketRef.current?.emit("candidate", e.candidate);
-      }
+      if (remoteAudioRef.current)
+        remoteAudioRef.current.srcObject = e.streams[0];
     };
 
     return pc;
@@ -104,35 +87,11 @@ const VideoCall: React.FC<RTCProps> = ({
     pendingCandidates.current = [];
   };
 
-  const startCall = async () => {
-    const pc = createPC();
-    peerRef.current = pc;
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-
-    localVideoRef.current!.srcObject = stream;
-
-    stream.getTracks().forEach((track) =>
-      pc.addTrack(track, stream)
-    );
-
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    socketRef.current?.emit("offer", offer);
-    setInCall(true);
-  };
-
   return (
     <div>
-      <video ref={remoteVideoRef} autoPlay />
-      <video ref={localVideoRef} autoPlay muted />
-      <button onClick={startCall}>Start</button>
+      <audio ref={remoteAudioRef} autoPlay />
     </div>
   );
 };
 
-export default VideoCall;
+export default AudioCall;

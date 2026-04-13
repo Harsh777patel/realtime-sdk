@@ -32,29 +32,26 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     methods: ["GET", "POST"],
   },
 });
 
-// io.use(async (socket, next) => {
-//   const apiKey = socket.handshake.auth?.apiKey;
+io.use(async (socket, next) => {
+  const apiKey = socket.handshake.auth.apiKey;
 
-//   if (!apiKey) {
-//     return next(new Error("API key missing"));
-//   }
+  if (!apiKey) {
+    return next(new Error("API key missing"));
+  }
 
-//   try {
-//     const isValid = await validateApiKey(apiKey);
-//     if (!isValid) {
-//       return next(new Error("Invalid API key"));
-//     }
-//     return next();
-//   } catch (err) {
-//     console.error("Socket auth error:", err);
-//     return next(new Error("Authentication failed"));
-//   }
-// });
+  const isValid = await validateApiKey(apiKey);
+
+  if (!isValid) {
+    return next(new Error("Invalid API key"));
+  }
+
+  next();
+});
 
 io.on("connection", (socket) => {
   console.log("🔗 Client connected:", socket.id);

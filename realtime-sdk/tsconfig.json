@@ -119,5 +119,6 @@
     "node_modules",
     "src/**/*.test.tsx",
     "src/**/*.stories.tsx"
-  ]
+  ],
+  "style": "dist/styles.css"
 }

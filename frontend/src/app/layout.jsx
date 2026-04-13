@@ -26,12 +26,11 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`antialiased`}
-      ><Toaster position="top-center" />
-        <Navbar />
+      >
+        <Toaster position="top-center" />
+        {/* <Navbar /> */}
         {children}
         <Footer />
-        <MyButton />
-
       </body>
     </html>
   );

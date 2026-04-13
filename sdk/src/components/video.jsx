@@ -1,44 +1,59 @@
 import React, { useEffect, useRef, useState } from "react";
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
+import './video.css';
 
-const VideoCall = () => {
+
+const VideoCall = ({
+  apiKey,
+  userId,
+  name = "Guest",
+  serverUrl = "http://localhost:5000",
+  roomId = "default",
+  iceServers = [{ urls: "stun:stun.l.google.com:19302" }],
+}) => {
   const [inCall, setInCall] = useState(false);
   const [isCaller, setIsCaller] = useState(false);
+
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
-  const [socket, setSocket] = useState(null);
+  const socketRef = useRef(null);
 
+  // Connect socket
   useEffect(() => {
-    const apiKey = localStorage.getItem("apiKey");
     if (!apiKey) return;
 
-    const socketInstance = io("http://localhost:5000", {
-      auth: { apiKey },
+    const socketInstance = io(serverUrl, {
+      auth: { apiKey, userId, name, roomId },
     });
-    setSocket(socketInstance);
+
+    socketRef.current = socketInstance;
+    socketInstance.emit("join-room", { roomId, userId, name });
 
     return () => socketInstance.disconnect();
-  }, []);
+  }, [apiKey, serverUrl, roomId]);
 
+  // Socket listeners
   useEffect(() => {
+    const socket = socketRef.current;
     if (!socket) return;
 
     socket.on("offer", async (offer) => {
       peerConnectionRef.current = createPeerConnection();
 
-      // Receiver apna local stream attach karega
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
-      localVideoRef.current.srcObject = stream;
+
+      if (localVideoRef.current)
+        localVideoRef.current.srcObject = stream;
+
       stream.getTracks().forEach((track) =>
         peerConnectionRef.current.addTrack(track, stream)
       );
 
       await peerConnectionRef.current.setRemoteDescription(offer);
-
       const answer = await peerConnectionRef.current.createAnswer();
       await peerConnectionRef.current.setLocalDescription(answer);
 
@@ -47,17 +62,11 @@ const VideoCall = () => {
     });
 
     socket.on("answer", async (answer) => {
-      if (peerConnectionRef.current) {
-        await peerConnectionRef.current.setRemoteDescription(answer);
-      }
+      await peerConnectionRef.current?.setRemoteDescription(answer);
     });
 
     socket.on("candidate", async (candidate) => {
-      try {
-        await peerConnectionRef.current.addIceCandidate(candidate);
-      } catch (err) {
-        console.error("Error adding received ice candidate", err);
-      }
+      await peerConnectionRef.current?.addIceCandidate(candidate);
     });
 
     return () => {
@@ -65,22 +74,19 @@ const VideoCall = () => {
       socket.off("answer");
       socket.off("candidate");
     };
-  }, [socket]);
+  }, []);
 
   const createPeerConnection = () => {
-    const pc = new RTCPeerConnection();
+    const pc = new RTCPeerConnection({ iceServers });
 
     pc.ontrack = (event) => {
-      console.log("📹 Remote stream received:", event.streams[0]);
-      if (remoteVideoRef.current) {
+      if (remoteVideoRef.current)
         remoteVideoRef.current.srcObject = event.streams[0];
-        remoteVideoRef.current.play().catch(() => {});
-      }
     };
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        socket.emit("candidate", event.candidate);
+        socketRef.current?.emit("candidate", event.candidate);
       }
     };
 
@@ -95,83 +101,90 @@ const VideoCall = () => {
       video: true,
       audio: true,
     });
-    localVideoRef.current.srcObject = stream;
+
+    if (localVideoRef.current)
+      localVideoRef.current.srcObject = stream;
 
     peerConnectionRef.current = createPeerConnection();
+
     stream.getTracks().forEach((track) =>
       peerConnectionRef.current.addTrack(track, stream)
     );
 
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
-    socket.emit("offer", offer);
+
+    socketRef.current?.emit("offer", offer);
   };
 
   const endCall = () => {
     setInCall(false);
     setIsCaller(false);
 
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
+    peerConnectionRef.current?.close();
+    peerConnectionRef.current = null;
+
+    if (localVideoRef.current?.srcObject) {
+      (localVideoRef.current.srcObject)
+        .getTracks()
+        .forEach((track) => track.stop());
     }
 
-    if (localVideoRef.current.srcObject) {
-      localVideoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-    }
-
-    localVideoRef.current.srcObject = null;
-    remoteVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current)
+      remoteVideoRef.current.srcObject = null;
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 p-4 border rounded-xl shadow-lg bg-gray-100 flex flex-col items-center">
-      <h2 className="text-2xl font-semibold mb-4">Video Call</h2>
+    <div className="vc-container">
+      <div className="vc-card">
 
-      {/* Video Display */}
-      <div className="w-full h-64 bg-black rounded-lg overflow-hidden mb-4 relative">
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          className="w-full h-full object-cover"
-        />
-        <video
-          ref={localVideoRef}
-          autoPlay
-          muted
-          playsInline
-          className="w-32 h-32 absolute bottom-2 right-2 border-2 border-white rounded-lg object-cover"
-        />
+        {/* Header */}
+        <div className="vc-header">
+          <h2>Video Call</h2>
+          <span className={`vc-status ${inCall ? "active" : ""}`}>
+            {inCall ? "Connected" : "Idle"}
+          </span>
+        </div>
+
+        {/* Video Area */}
+        <div className="vc-video-wrapper">
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="vc-remote-video"
+          />
+
+          <div className="vc-local-wrapper">
+            <video
+              ref={localVideoRef}
+              autoPlay
+              muted
+              playsInline
+              className="vc-local-video"
+            />
+          </div>
+
+          {!inCall && (
+            <div className="vc-overlay">
+              <p>Start a call to connect</p>
+            </div>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="vc-controls">
+          {!inCall ? (
+            <button className="vc-btn start" onClick={startCall}>
+              Start Call
+            </button>
+          ) : (
+            <button className="vc-btn end" onClick={endCall}>
+              End Call
+            </button>
+          )}
+        </div>
       </div>
-
-      {/* Buttons */}
-      <div className="flex gap-4 mb-2">
-        {!inCall ? (
-          <button
-            onClick={startCall}
-            className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition"
-          >
-            Start Call
-          </button>
-        ) : (
-          <button
-            onClick={endCall}
-            className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition"
-          >
-            End Call
-          </button>
-        )}
-      </div>
-
-      {/* Status */}
-      <p className="text-gray-700 text-sm">
-        {inCall
-          ? isCaller
-            ? "📞 You started the call"
-            : "📥 Incoming call connected"
-          : "❌ Not in call"}
-      </p>
     </div>
   );
 };

@@ -2,6 +2,41 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import ApiKey from "../models/ApiKey.js";
 
+// import { validateApiKey } from "../services/apiKeyService.js";
+
+export const validateKeyController = async (req, res) => {
+  try {
+    const apiKey = req.headers["x-api-key"];
+
+    if (!apiKey) {
+      return res.status(400).json({
+        success: false,
+        message: "API key missing",
+      });
+    }
+
+    const isValid = await validateApiKey(apiKey);
+
+    if (!isValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid API key",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "API key valid",
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
 /**
  * CREATE (Generate) NEW API KEY
  * POST /api-keys
@@ -114,25 +149,21 @@ export const deleteApiKey = async (req, res) => {
  * POST /api-keys/validate-key
  */
 export const validateApiKey = async (apiKey) => {
+  console.log(apiKey);
+  
   try {
-    // Ensure apiKey is a string
-    if (!apiKey || typeof apiKey !== 'string') {
-      console.error("API key must be a string, received:", typeof apiKey);
+    if (!apiKey || typeof apiKey !== "string") {
       return false;
     }
 
-    // Query database - match the field name in your schema
-    const key = await ApiKey.findOne({ apiKey });
-    
-    if (key) {
-      console.log("✅ API key validated successfully");
-      return true;
-    }
-    
-    console.warn("❌ API key not found in database");
-    return false;
+    const key = await ApiKey.findOne({
+      apiKey: apiKey.trim(),
+      isActive: true,      // optional if you have this field
+    });
+
+    return !!key;
   } catch (err) {
-    console.error("Error validating key:", err.message);
+    console.error("API Key validation error:", err.message);
     return false;
   }
 };

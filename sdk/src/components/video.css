@@ -1,0 +1,142 @@
+/* Container */
+.vc-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #111827, #1f2937, #000);
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+/* Card */
+.vc-card {
+  width: 100%;
+  max-width: 700px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+/* Header */
+.vc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.vc-header h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+/* Status badge */
+.vc-status {
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: rgba(156, 163, 175, 0.2);
+  color: #d1d5db;
+}
+
+.vc-status.active {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+/* Video area */
+.vc-video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: black;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Remote video */
+.vc-remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Local video floating */
+.vc-local-wrapper {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.vc-local-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Overlay */
+.vc-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-overlay p {
+  color: #d1d5db;
+  font-size: 14px;
+}
+
+/* Controls */
+.vc-controls {
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* Buttons */
+.vc-btn {
+  padding: 10px 20px;
+  border-radius: 25px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+/* Start button */
+.vc-btn.start {
+  background: #22c55e;
+}
+
+.vc-btn.start:hover {
+  background: #16a34a;
+}
+
+/* End button */
+.vc-btn.end {
+  background: #ef4444;
+}
+
+.vc-btn.end:hover {
+  background: #dc2626;
+}
+
+/* Click animation */
+.vc-btn:active {
+  transform: scale(0.95);
+}

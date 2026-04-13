@@ -1,50 +1,92 @@
 import React, { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
+import './audio.css';
 
-const AudioCall = () => {
+const AudioCall = ({
+  apiKey,
+  userId,
+  name = "Guest",
+  serverUrl = "http://localhost:5000",
+  roomId = "default",
+  iceServers = [{ urls: "stun:stun.l.google.com:19302" }],
+}) => {
   const [inCall, setInCall] = useState(false);
   const [isCaller, setIsCaller] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
+
   const localStreamRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const peerConnectionRef = useRef(null);
+  const socketRef = useRef(null);
   const analyserRef = useRef(null);
   const animationFrameRef = useRef(null);
-  const [socket, setSocket] = useState(null);
+  const pendingCandidatesRef = useRef([]);
 
+  /* =========================
+     SOCKET CONNECTION
+  ========================= */
   useEffect(() => {
-    const apiKey = localStorage.getItem("apiKey");
     if (!apiKey) return;
 
-    const socketInstance = io("http://localhost:5000", {
-      auth: { apiKey }
+    const socketInstance = io(serverUrl, {
+      auth: { apiKey, userId, name, roomId },
     });
-    setSocket(socketInstance);
+
+    socketRef.current = socketInstance;
+
+    socketInstance.emit("join-room", { roomId, userId, name });
 
     return () => socketInstance.disconnect();
-  }, []);
+  }, [apiKey, serverUrl, roomId]);
 
+  /* =========================
+     SOCKET LISTENERS
+  ========================= */
   useEffect(() => {
+    const socket = socketRef.current;
     if (!socket) return;
 
     socket.on("offer", async (offer) => {
       peerConnectionRef.current = createPeerConnection();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+
+      localStreamRef.current = stream;
+      setupAudioAnalyser(stream);
+
+      stream.getTracks().forEach((track) =>
+        peerConnectionRef.current.addTrack(track, stream)
+      );
+
       await peerConnectionRef.current.setRemoteDescription(offer);
+
+      // ✅ Flush queued candidates
+      await flushCandidates();
+
       const answer = await peerConnectionRef.current.createAnswer();
       await peerConnectionRef.current.setLocalDescription(answer);
+
       socket.emit("answer", answer);
       setInCall(true);
     });
 
     socket.on("answer", async (answer) => {
-      await peerConnectionRef.current.setRemoteDescription(answer);
+      await peerConnectionRef.current?.setRemoteDescription(answer);
+
+      // ✅ Flush queued candidates
+      await flushCandidates();
     });
 
     socket.on("candidate", async (candidate) => {
-      try {
-        await peerConnectionRef.current.addIceCandidate(candidate);
-      } catch (err) {
-        console.error("Error adding received ICE candidate", err);
+      const pc = peerConnectionRef.current;
+      if (!pc) return;
+
+      if (pc.remoteDescription) {
+        await pc.addIceCandidate(candidate);
+      } else {
+        pendingCandidatesRef.current.push(candidate);
       }
     });
 
@@ -52,138 +94,189 @@ const AudioCall = () => {
       socket.off("offer");
       socket.off("answer");
       socket.off("candidate");
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
     };
-  }, [socket]);
+  }, []);
 
-  const setupAudioAnalyser = (stream) => {
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    const analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    source.connect(analyser);
-    analyserRef.current = analyser;
+  /* =========================
+     FLUSH ICE QUEUE
+  ========================= */
+  const flushCandidates = async () => {
+    const pc = peerConnectionRef.current;
+    if (!pc) return;
 
-    const updateLevel = () => {
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(dataArray);
-      const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-      setAudioLevel(average);
-      animationFrameRef.current = requestAnimationFrame(updateLevel);
-    };
-    
-    updateLevel();
+    for (const c of pendingCandidatesRef.current) {
+      await pc.addIceCandidate(c);
+    }
+
+    pendingCandidatesRef.current = [];
   };
 
+  /* =========================
+     PEER CONNECTION
+  ========================= */
   const createPeerConnection = () => {
-    const pc = new RTCPeerConnection();
+    const pc = new RTCPeerConnection({ iceServers });
 
     pc.ontrack = (event) => {
-      remoteAudioRef.current.srcObject = event.streams[0];
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = event.streams[0];
+      }
     };
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        socket.emit("candidate", event.candidate);
+        socketRef.current?.emit("candidate", event.candidate);
       }
     };
 
     return pc;
   };
 
+  /* =========================
+     AUDIO ANALYSER
+  ========================= */
+  const setupAudioAnalyser = (stream) => {
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+
+    const updateLevel = () => {
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(data);
+
+      const avg =
+        data.reduce((sum, val) => sum + val, 0) / data.length;
+
+      setAudioLevel(avg);
+      animationFrameRef.current = requestAnimationFrame(updateLevel);
+    };
+
+    updateLevel();
+  };
+
+  /* =========================
+     START CALL
+  ========================= */
   const startCall = async () => {
     setIsCaller(true);
     setInCall(true);
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+
     localStreamRef.current = stream;
     setupAudioAnalyser(stream);
 
     peerConnectionRef.current = createPeerConnection();
-    stream.getTracks().forEach((track) => {
-      peerConnectionRef.current.addTrack(track, stream);
-    });
+
+    stream.getTracks().forEach((track) =>
+      peerConnectionRef.current.addTrack(track, stream)
+    );
 
     const offer = await peerConnectionRef.current.createOffer();
     await peerConnectionRef.current.setLocalDescription(offer);
-    socket.emit("offer", offer);
+
+    socketRef.current?.emit("offer", offer);
   };
 
+  /* =========================
+     END CALL
+  ========================= */
   const endCall = () => {
+    setInCall(false);
+    setIsCaller(false);
+    setAudioLevel(0);
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-    setAudioLevel(0);
-    setInCall(false);
-    setIsCaller(false);
+
     peerConnectionRef.current?.close();
     peerConnectionRef.current = null;
+
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current
+        .getTracks()
+        .forEach((track) => track.stop());
     }
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+
+    pendingCandidatesRef.current = [];
   };
 
+  /* =========================
+     UI
+  ========================= */
+
   return (
-    <div className="max-w-md mx-auto mt-16 p-6 border rounded-xl shadow-lg bg-white flex flex-col items-center">
-      <h2 className="text-2xl font-semibold mb-6">Audio Call</h2>
+    <div className="audio-container">
+      <div className="audio-card">
 
-      {/* Status */}
-      <p className="mb-4 text-gray-700">
-        {inCall ? (isCaller ? "You are in call" : "Incoming call") : "Not in call"}
-      </p>
+        {/* Header */}
+        <div className="audio-header">
+          <h2>Audio Call</h2>
+          <span className={`audio-status ${inCall ? "active" : ""}`}>
+            {inCall ? "Connected" : "Idle"}
+          </span>
+        </div>
 
-      {/* Buttons */}
-      <div className="flex gap-4 mb-4">
-        {!inCall ? (
-          <button
-            onClick={startCall}
-            className="bg-green-500 text-white px-6 py-2 rounded-full hover:bg-green-600 transition"
-          >
-            Start Call
-          </button>
-        ) : (
-          <button
-            onClick={endCall}
-            className="bg-red-500 text-white px-6 py-2 rounded-full hover:bg-red-600 transition"
-          >
-            End Call
-          </button>
-        )}
-      </div>
+        {/* Avatar / Call Visual */}
+        <div className="audio-visual">
+          <div className="avatar">
+            {name?.[0]?.toUpperCase()}
+          </div>
 
-      {/* Remote audio */}
-      <div className="w-full mt-4">
-        <audio ref={remoteAudioRef} autoPlay controls className="w-full rounded-md" />
-      </div>
+          {inCall && (
+            <div className="pulse-ring"></div>
+          )}
+        </div>
 
-      {/* Audio Level Meter */}
-      {inCall && (
-        <div className="w-full mt-4">
-          <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+        {/* Status */}
+        <p className="audio-text">
+          {inCall
+            ? isCaller
+              ? "You are in call"
+              : "Incoming call"
+            : "Start a call"}
+        </p>
+
+        {/* Controls */}
+        <div className="audio-controls">
+          {!inCall ? (
+            <button className="btn start" onClick={startCall}>
+              📞 Start
+            </button>
+          ) : (
+            <button className="btn end" onClick={endCall}>
+              ❌ End
+            </button>
+          )}
+        </div>
+
+        {/* Hidden audio */}
+        <audio ref={remoteAudioRef} autoPlay />
+
+        {/* Audio Meter */}
+        {inCall && (
+          <div className="audio-meter">
             <div
-              className="h-full transition-all duration-100"
-              style={{ 
-                width: `${(audioLevel / 255) * 100}%`,
-                backgroundColor: audioLevel > 128 ? '#ef4444' : '#22c55e'
-              }}
+              className="audio-bar"
+              style={{ width: `${(audioLevel / 255) * 100}%` }}
             />
           </div>
-          <div className="mt-2 text-sm text-gray-500 text-center">
-            Microphone Level: {Math.round((audioLevel / 255) * 100)}%
-          </div>
-        </div>
-      )}
-
-      {/* Connection Status */}
-      {inCall && (
-        <div className="mt-4 text-sm text-gray-500">
-          Microphone is active 🎤
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
+
 };
 
 export default AudioCall;

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const url = "mongodb+srv://harsh:royalharsh4004@cluster0.i6jxwnb.mongodb.net/mydb?retryWrites=true&w=majority&appName=Cluster0";
+const url = "mongodb+srv://harsh:royalharsh4004@cluster0.i6jxwnb.mongodb.net/realtimesdk?retryWrites=true&w=majority&appName=Cluster0";
 
 const connection = () => {
     mongoose
