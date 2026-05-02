@@ -4,7 +4,7 @@ import {
   getApiKeys,
   deleteApiKey,
   validateKeyController,
-} from "../controllers/apikeycontroller.js";
+} from "../controllers/apiKeyController.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = express.Router();

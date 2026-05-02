@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import io, { Socket } from "socket.io-client";
 import { Message } from "../types";
+import "./Chat.css";
 
 interface Props {
   apiKey: string;
@@ -8,6 +9,7 @@ interface Props {
   name?: string;
   serverUrl?: string;
   roomId?: string;
+  position?: string;
 }
 
 const Chat: React.FC<Props> = ({
@@ -16,6 +18,7 @@ const Chat: React.FC<Props> = ({
   name = "Guest",
   serverUrl = "http://localhost:5000",
   roomId = "default",
+  position
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -41,7 +44,7 @@ const Chat: React.FC<Props> = ({
     });
 
     return () => socket.disconnect();
-  }, []);
+  }, [apiKey, userId, name, serverUrl, roomId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -61,28 +64,58 @@ const Chat: React.FC<Props> = ({
     setInput("");
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  };
+
   return (
-    <div className="max-w-md mx-auto h-screen flex flex-col bg-gray-900 text-white">
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+    <div className="whatsapp-container">
+      {/* Header */}
+      <div className="whatsapp-header">
+        <div className="whatsapp-avatar">
+          {name.charAt(0).toUpperCase()}
+        </div>
+        <div className="whatsapp-header-info">
+          <h2>{name}</h2>
+          <p>Room: {roomId}</p>
+        </div>
+      </div>
+
+      {/* Messages Container */}
+      <div className="whatsapp-messages">
+        {messages.length === 0 && (
+          <div className="whatsapp-empty">
+            <p>Send a message to start the chat</p>
+          </div>
+        )}
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.type === "sent" ? "justify-end" : "justify-start"}`}>
-            <div className="bg-gray-700 px-3 py-2 rounded-lg max-w-xs">
-              {m.text}
-              <div className="text-xs opacity-60 text-right">{m.time}</div>
+          <div key={i} className={`whatsapp-message-wrapper ${m.type}`}>
+            <div className={`whatsapp-message ${m.type}`}>
+              <span className="text">{m.text}</span>
+              <span className="time">{m.time}</span>
             </div>
           </div>
         ))}
         <div ref={endRef} />
       </div>
 
-      <div className="flex p-3 gap-2 bg-gray-800">
+      {/* Input Area */}
+      <div className="whatsapp-input-area">
         <input
-          className="flex-1 p-2 rounded-lg bg-gray-700 outline-none"
+          type="text"
+          placeholder="Type a message"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="whatsapp-input"
         />
-        <button onClick={send} className="bg-blue-500 px-4 rounded-lg">
-          Send
+        <button onClick={send} disabled={!input.trim()} className="whatsapp-send-btn">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path>
+          </svg>
         </button>
       </div>
     </div>

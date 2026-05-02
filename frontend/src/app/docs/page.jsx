@@ -1,5 +1,6 @@
 'use client';
 import Link from "next/link";
+import Snowfall from "react-snowfall";
 
 const cards = [
   {
@@ -41,6 +42,20 @@ const cards = [
     color: "#f59e0b",
     tag: "Stable",
   },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path d="M14 2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z" stroke="currentColor" strokeWidth="1.3"/>
+        <path d="M4 6h12M10 2v4" stroke="currentColor" strokeWidth="1.3"/>
+        <circle cx="10" cy="12" r="3" stroke="currentColor" strokeWidth="1.3"/>
+      </svg>
+    ),
+    title: "Whiteboard",
+    desc: "Collaborative canvas with shape recognition, multi-page support, and cloud saving.",
+    href: "/docs/whiteboard",
+    color: "#ec4899",
+    tag: "Beta",
+  },
 ];
 
 const quickLinks = [
@@ -51,7 +66,9 @@ const quickLinks = [
 
 export default function DocsHome() {
   return (
+    
     <div>
+    <Snowfall color="#82C3D9"/>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -100,7 +117,7 @@ export default function DocsHome() {
         </div>
 
         {/* Component cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 48 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14, marginBottom: 48 }}>
           {cards.map((c, i) => (
             <Link
               key={i}

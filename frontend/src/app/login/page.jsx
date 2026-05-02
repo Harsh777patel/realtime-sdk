@@ -5,119 +5,157 @@ import * as Yup from 'yup';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import AnimatedBackground from '@/components/AnimatedBackground';
+import { IconBrandGoogle, IconMail, IconLock, IconArrowRight, IconLoaderQuarter, IconSparkles } from '@tabler/icons-react';
 
-// ✅ Validation Schema for Login
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Email is required'),
-  password: Yup.string().required('Password is required')
+  password: Yup.string().required('Password is required'),
 });
 
 const Login = () => {
   const router = useRouter();
 
-  // Step-1 : initialization
   const loginForm = useFormik({
-    initialValues: {
-      email: '',
-      password: ''
-    },
-    onSubmit: async (values) => {
+    initialValues: { email: '', password: '' },
+    onSubmit: async (values, { setSubmitting }) => {
       try {
         const result = await axios.post('http://localhost:5000/api/users/login', values);
-        console.log('login response', result.status, result.data);
         if (result?.data?.token) {
-          toast.success('Login successful');
+          toast.success('Welcome back!');
           localStorage.setItem('token', result.data.token);
-          router.push('/user/dashboard');
+          router.push(values.email === 'harsh4004@gmail.com' ? '/admin/dashboard' : '/user/dashboard');
         } else {
-          toast.error(result?.data?.message || 'Login failed: no token returned');
-          console.error('No token in login response', result.data);
+          toast.error(result?.data?.message || 'Login failed');
         }
       } catch (err) {
-        console.error('Login error', err?.response?.data || err.message || err);
-        toast.error(err?.response?.data?.message || 'Something went wrong during login');
+        toast.error(err?.response?.data?.message || 'Something went wrong');
+      } finally {
+        setSubmitting(false);
       }
     },
-    validationSchema: LoginSchema
+    validationSchema: LoginSchema,
   });
 
   return (
-    <div className='min-h-screen bg-gray-200 pt-10'>
-      <div className="max-w-lg mx-auto mt-7 bg-white border border-gray-200 rounded-xl shadow-2xs dark:bg-neutral-900 dark:border-neutral-700">
-        <div className="p-4 sm:p-7">
-          <div className="text-center">
-            <h1 className="block text-2xl font-bold text-gray-800 dark:text-white">Login</h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-neutral-400">
-              Don't have an account?
-              <a className="text-blue-600 decoration-2 hover:underline focus:outline-hidden focus:underline font-medium dark:text-blue-500" href="./signup">
-                Sign up here
-              </a>
-            </p>
-          </div>
+    <div style={{ minHeight: '100vh', background: '#030712', color: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden', fontFamily: "'Outfit', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes ping-slow { 0%,100%{transform:scale(1);opacity:0.9} 50%{transform:scale(1.6);opacity:0} }
+        .fade-up { animation: fadeUp 0.6s ease forwards; }
+        .input-field {
+          width:100%; padding:14px 14px 14px 44px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 12px; color: #f8fafc; font-size:15px;
+          outline:none; transition: border-color 0.2s, box-shadow 0.2s;
+          font-family: 'Outfit', sans-serif;
+          box-sizing: border-box;
+        }
+        .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+        .input-field::placeholder { color: #475569; }
+        .input-err { border-color: rgba(239,68,68,0.5) !important; }
+        .google-btn {
+          width:100%; padding:13px; display:flex; align-items:center; justify-content:center; gap:10px;
+          background: rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+          border-radius:12px; color:#e2e8f0; font-size:14px; font-weight:600; cursor:pointer;
+          transition:all 0.2s; font-family:'Outfit',sans-serif;
+        }
+        .google-btn:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); }
+        .submit-btn {
+          width:100%; padding:15px; background:linear-gradient(135deg,#4f46e5,#7c3aed);
+          border:none; border-radius:12px; color:#fff; font-size:16px; font-weight:700;
+          cursor:pointer; transition:all 0.3s; display:flex; align-items:center; justify-content:center;
+          gap:8px; font-family:'Outfit',sans-serif; box-shadow:0 8px 30px rgba(99,102,241,0.35);
+        }
+        .submit-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 12px 40px rgba(99,102,241,0.5); background:linear-gradient(135deg,#5b54f7,#8b44ff); }
+        .submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+      `}</style>
 
-          <div className="mt-5">
-            <button type="button" className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-hidden focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800 dark:focus:bg-neutral-800">
-              {/* Google Icon */}
-              <svg className="w-4 h-auto" width="46" height="47" viewBox="0 0 46 47" fill="none">
-                <path d="M46 24.0287C46 22.09 45.8533 20.68 45.5013 19.2112H23.4694V27.9356H36.4069C36.1429 30.1094 34.7347 33.37 31.5957 35.5731L31.5663 35.8669L38.5191 41.2719L38.9885 41.3306C43.4477 37.2181 46 31.1669 46 24.0287Z" fill="#4285F4" />
-                <path d="M23.4694 47C29.8061 47 35.1161 44.9144 39.0179 41.3012L31.625 35.5437C29.6301 36.9244 26.9898 37.8937 23.4987 37.8937C17.2793 37.8937 12.0281 33.7812 10.1505 28.1412L9.88649 28.1706L2.61097 33.7812L2.52296 34.0456C6.36608 41.7125 14.287 47 23.4694 47Z" fill="#34A853" />
-                <path d="M10.1212 28.1413C9.62245 26.6725 9.32908 25.1156 9.32908 23.5C9.32908 21.8844 9.62245 20.3275 10.0918 18.8588V18.5356L2.75765 12.8369L2.52296 12.9544C0.909439 16.1269 0 19.7106 0 23.5C0 27.2894 0.909439 30.8731 2.49362 34.0456L10.1212 28.1413Z" fill="#FBBC05" />
-                <path d="M23.4694 9.07688C27.8699 9.07688 30.8622 10.9863 32.5344 12.5725L39.1645 6.11C35.0867 2.32063 29.8061 0 23.4694 0C14.287 0 6.36607 5.2875 2.49362 12.9544L10.0918 18.8588C11.9987 13.1894 17.25 9.07688 23.4694 9.07688Z" fill="#EB4335" />
-              </svg>
-              Login with Google
-            </button>
+      {/* Sparkles */}
+      <AnimatedBackground intensity="normal" />
 
-            <div className="py-3 flex items-center text-xs text-gray-400 uppercase before:flex-1 before:border-t before:border-gray-200 before:me-6 after:flex-1 after:border-t after:border-gray-200 after:ms-6 dark:text-neutral-500 dark:before:border-neutral-600 dark:after:border-neutral-600">Or</div>
+      {/* Ambient glows */}
+      <div style={{ position:'fixed', top:'-20%', left:'-10%', width:'50vw', height:'60vh', background:'radial-gradient(ellipse, rgba(99,102,241,0.14) 0%, transparent 70%)', pointerEvents:'none', zIndex:1 }} />
+      <div style={{ position:'fixed', bottom:'-20%', right:'-10%', width:'40vw', height:'50vh', background:'radial-gradient(ellipse, rgba(168,85,247,0.1) 0%, transparent 70%)', pointerEvents:'none', zIndex:1 }} />
 
-            {/* Form */}
-            <form onSubmit={loginForm.handleSubmit} >
-              <div className="grid gap-y-4">
-
-                {/* Email */}
-                <div>
-                  <label htmlFor="email" className="block text-sm mb-2 dark:text-white">Email address</label>
-                  <input
-                    type="email"
-                    id="email"
-                    onChange={loginForm.handleChange}
-                    value={loginForm.values.email}
-                    className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
-                  />
-                  {loginForm.touched.email && loginForm.errors.email && (
-                    <p className="text-xs text-red-600 mt-2">{loginForm.errors.email}</p>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label htmlFor="password" className="block text-sm mb-2 dark:text-white">Password</label>
-                  <input
-                    type="password"
-                    id="password"
-                    onChange={loginForm.handleChange}
-                    value={loginForm.values.password}
-                    className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
-                  />
-                  {loginForm.touched.password && loginForm.errors.password && (
-                    <p className="text-xs text-red-600 mt-2">{loginForm.errors.password}</p>
-                  )}
-                </div>
-
-                {/* Remember Me */}
-                <div className="flex items-center">
-                  <input id="remember-me" name="remember-me" type="checkbox" className="shrink-0 mt-0.5 border-gray-200 rounded-sm text-blue-600 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700" />
-                  <label htmlFor="remember-me" className="ms-2 text-sm dark:text-white">Remember me</label>
-                </div>
-
-                <button type="submit" className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700">Login</button>
-              </div>
-            </form>
-            {/* End Form */}
-          </div>
+      <div style={{ width:'100%', maxWidth:'440px', position:'relative', zIndex:10 }}>
+        {/* Logo */}
+        <div className="fade-up" style={{ textAlign:'center', marginBottom:'36px' }}>
+          <Link href="/" style={{ display:'inline-flex', alignItems:'center', gap:'10px', textDecoration:'none', marginBottom:'28px' }}>
+            <div style={{ width:'44px', height:'44px', background:'linear-gradient(135deg,#6366f1,#a855f7)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', boxShadow:'0 8px 24px rgba(99,102,241,0.4)' }}>⚡</div>
+            <span style={{ fontSize:'22px', fontWeight:800, color:'#f8fafc', letterSpacing:'-0.02em' }}>StreamKit</span>
+          </Link>
+          <h1 style={{ fontSize:'30px', fontWeight:900, letterSpacing:'-0.03em', marginBottom:'8px' }}>Welcome back</h1>
+          <p style={{ color:'#64748b', fontSize:'15px' }}>Sign in to your account</p>
         </div>
+
+        {/* Card */}
+        <div className="fade-up" style={{ background:'rgba(255,255,255,0.03)', backdropFilter:'blur(24px)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:'24px', padding:'36px', boxShadow:'0 40px 80px rgba(0,0,0,0.4)', animationDelay:'0.1s' }}>
+          {/* Google */}
+          <button type="button" className="google-btn" style={{ marginBottom:'24px' }}>
+            <IconBrandGoogle size={20} />
+            <span>Continue with Google</span>
+          </button>
+
+          {/* Divider */}
+          <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'24px' }}>
+            <div style={{ flex:1, height:'1px', background:'rgba(255,255,255,0.07)' }} />
+            <span style={{ fontSize:'11px', color:'#475569', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em' }}>or email</span>
+            <div style={{ flex:1, height:'1px', background:'rgba(255,255,255,0.07)' }} />
+          </div>
+
+          <form onSubmit={loginForm.handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'18px' }}>
+            {/* Email */}
+            <div>
+              <label style={{ display:'block', fontSize:'13px', fontWeight:600, color:'#94a3b8', marginBottom:'8px' }}>Email Address</label>
+              <div style={{ position:'relative' }}>
+                <IconMail size={17} style={{ position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'#475569' }} />
+                <input type="email" name="email" placeholder="name@example.com"
+                  onChange={loginForm.handleChange} onBlur={loginForm.handleBlur} value={loginForm.values.email}
+                  className={`input-field${loginForm.touched.email && loginForm.errors.email ? ' input-err' : ''}`}
+                />
+              </div>
+              {loginForm.touched.email && loginForm.errors.email && <p style={{ color:'#ef4444', fontSize:'12px', marginTop:'6px' }}>{loginForm.errors.email}</p>}
+            </div>
+
+            {/* Password */}
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'8px' }}>
+                <label style={{ fontSize:'13px', fontWeight:600, color:'#94a3b8' }}>Password</label>
+                <Link href="/forgot-password" style={{ fontSize:'12px', color:'#818cf8', textDecoration:'none', fontWeight:600 }}>Forgot?</Link>
+              </div>
+              <div style={{ position:'relative' }}>
+                <IconLock size={17} style={{ position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'#475569' }} />
+                <input type="password" name="password" placeholder="••••••••"
+                  onChange={loginForm.handleChange} onBlur={loginForm.handleBlur} value={loginForm.values.password}
+                  className={`input-field${loginForm.touched.password && loginForm.errors.password ? ' input-err' : ''}`}
+                />
+              </div>
+              {loginForm.touched.password && loginForm.errors.password && <p style={{ color:'#ef4444', fontSize:'12px', marginTop:'6px' }}>{loginForm.errors.password}</p>}
+            </div>
+
+            {/* Remember */}
+            <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+              <input id="remember" type="checkbox" style={{ width:'16px', height:'16px', accentColor:'#6366f1', cursor:'pointer' }} />
+              <label htmlFor="remember" style={{ fontSize:'13px', color:'#64748b', cursor:'pointer' }}>Remember me</label>
+            </div>
+
+            <button type="submit" disabled={loginForm.isSubmitting} className="submit-btn">
+              {loginForm.isSubmitting ? <IconLoaderQuarter size={20} style={{ animation:'spin 1s linear infinite' }} /> : <><span>Sign In</span><IconArrowRight size={18} /></>}
+            </button>
+          </form>
+        </div>
+
+        <p className="fade-up" style={{ textAlign:'center', marginTop:'28px', color:'#475569', fontSize:'14px', animationDelay:'0.2s' }}>
+          Don't have an account?{' '}
+          <Link href="/signup" style={{ color:'#818cf8', fontWeight:700, textDecoration:'none' }}>Create one free</Link>
+        </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Login;

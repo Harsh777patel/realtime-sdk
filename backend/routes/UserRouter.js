@@ -28,9 +28,13 @@ router.get("/getbyid", verifyToken, async (req, res) => {
 // });
 
 // UPDATE profile
-router.put("/profile", async (req, res) => {
-  const user = await User.findOneAndUpdate({}, req.body, { new: true, upsert: true });
-  res.json(user);
+router.put("/update", verifyToken, async (req, res) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, req.body, { new: true });
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: "Update failed" });
+  }
 });
 
 

@@ -9,7 +9,13 @@ const apikeySchema = new mongoose.Schema(
       required: true,
     },
 
-    // API Key (HASHED)
+    // Descriptive name
+    name: {
+      type: String,
+      required: true,
+    },
+
+    // API Key (HASHED or Raw for now)
     apiKey: {
       type: String,
       required: true,

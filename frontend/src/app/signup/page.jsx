@@ -2,192 +2,184 @@
 import axios from 'axios';
 import { useFormik } from 'formik';
 import { useRouter } from 'next/navigation';
-import React from 'react'
+import React from 'react';
 import toast from 'react-hot-toast';
 import * as Yup from 'yup';
+import Link from 'next/link';
+import AnimatedBackground from '@/components/AnimatedBackground';
+import { IconBrandGoogle, IconMail, IconLock, IconUser, IconArrowRight, IconLoaderQuarter, IconCircleCheck } from '@tabler/icons-react';
 
 const SignupSchema = Yup.object().shape({
-  name: Yup.string()
-    .min(2, 'Too Short!')
-    .max(50, 'Too Long!')
-    .required('Required'),
-  email: Yup.string().email('Invalid email').required('Required'),
-  password: Yup.string().required('Password is required')
-    .matches(/[A-Z]/, 'Must contain at least one uppercase letter')
-    .matches(/[a-z]/, 'Must contain at least one lowercase letter')
-    .matches(/[0-9]/, 'Must contain at least one number')
-    .matches(/\W/, 'Must contain at least one special character'),
-  confirmPassword: Yup.string().required('Confirm Password is required')
-    .oneOf([Yup.ref('password'), null], 'Passwords must match')
+  name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!').required('Name is required'),
+  email: Yup.string().email('Invalid email').required('Email is required'),
+  password: Yup.string()
+    .required('Password is required').min(8, 'Min 8 characters')
+    .matches(/[A-Z]/, 'Must contain uppercase').matches(/[a-z]/, 'Must contain lowercase')
+    .matches(/[0-9]/, 'Must contain number').matches(/\W/, 'Must contain special character'),
+  confirmPassword: Yup.string().required('Please confirm your password').oneOf([Yup.ref('password'), null], 'Passwords must match'),
 });
 
 const Signup = () => {
-
   const router = useRouter();
 
   const signupForm = useFormik({
-    initialValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: ''
+    initialValues: { name: '', email: '', password: '', confirmPassword: '' },
+    onSubmit: async (values, { setSubmitting }) => {
+      try {
+        await axios.post('http://localhost:5000/api/users/register', values);
+        toast.success('Account created successfully!');
+        router.push('/login');
+      } catch (err) {
+        toast.error(err?.response?.data?.message || 'Something went wrong');
+      } finally {
+        setSubmitting(false);
+      }
     },
-    onSubmit: (values) => {
-      console.log(values);
-      axios.post('http://localhost:5000/api/users/register', values)
-        .then((result) => {
-          console.log(result.status);
-          toast.success('User registered successfully');
-          router.push('/login');
-        }).catch((err) => {
-          console.log(err);
-          toast.error('Something went wrong')
-        });
-    },
-    validationSchema: SignupSchema
+    validationSchema: SignupSchema,
   });
 
+  const f = signupForm;
+
   return (
-    <div className='min-h-screen bg-gray-200 flex justify-center '>
-      <div className="max-w-lg w-full my-15 bg-white border border-gray-200 rounded-xl shadow-2xs dark:bg-neutral-900 dark:border-neutral-700">
-        <div className="p-4 sm:p-7">
-          <div className="text-center">
-            <h1 className="block text-2xl font-bold text-gray-800 dark:text-white">Sign up</h1>
-            <p className="mt-2 text-sm text-gray-600 dark:text-neutral-400">
-              Already have an account?
-              <a className="text-blue-600 decoration-2 hover:underline focus:outline-hidden focus:underline font-medium dark:text-blue-500" href="./login">
-                Sign in here
-              </a>
-            </p>
-          </div>
+    <div style={{ minHeight:'100vh', background:'#030712', color:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', position:'relative', overflow:'hidden', fontFamily:"'Outfit', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+        .fade-up { animation: fadeUp 0.6s ease forwards; }
+        .input-field {
+          width:100%; padding:13px 13px 13px 44px;
+          background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+          border-radius:12px; color:#f8fafc; font-size:14px; outline:none;
+          transition:border-color 0.2s, box-shadow 0.2s; font-family:'Outfit',sans-serif;
+          box-sizing:border-box;
+        }
+        .input-field:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+        .input-field::placeholder { color:#475569; }
+        .input-err { border-color:rgba(239,68,68,0.5) !important; }
+        .google-btn {
+          width:100%; padding:13px; display:flex; align-items:center; justify-content:center; gap:10px;
+          background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+          border-radius:12px; color:#e2e8f0; font-size:14px; font-weight:600; cursor:pointer;
+          transition:all 0.2s; font-family:'Outfit',sans-serif;
+        }
+        .google-btn:hover { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); }
+        .submit-btn {
+          width:100%; padding:15px; background:linear-gradient(135deg,#4f46e5,#7c3aed);
+          border:none; border-radius:12px; color:#fff; font-size:16px; font-weight:700;
+          cursor:pointer; transition:all 0.3s; display:flex; align-items:center; justify-content:center;
+          gap:8px; font-family:'Outfit',sans-serif; box-shadow:0 8px 30px rgba(99,102,241,0.35);
+        }
+        .submit-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 12px 40px rgba(99,102,241,0.5); background:linear-gradient(135deg,#5b54f7,#8b44ff); }
+        .submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+        .two-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        @media(max-width:480px) { .two-col { grid-template-columns:1fr; } }
+      `}</style>
 
-          <div className="mt-5">
-            <button type="button" className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-200 focus:outline-hidden focus:bg-gray-200 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800 dark:focus:bg-neutral-800">
-              <svg className="w-4 h-auto" width="46" height="47" viewBox="0 0 46 47" fill="none">
-                <path d="M46 24.0287C46 22.09 45.8533 20.68 45.5013 19.2112H23.4694V27.9356H36.4069C36.1429 30.1094 34.7347 33.37 31.5957 35.5731L31.5663 35.8669L38.5191 41.2719L38.9885 41.3306C43.4477 37.2181 46 31.1669 46 24.0287Z" fill="#4285F4" />
-                <path d="M23.4694 47C29.8061 47 35.1161 44.9144 39.0179 41.3012L31.625 35.5437C29.6301 36.9244 26.9898 37.8937 23.4987 37.8937C17.2793 37.8937 12.0281 33.7812 10.1505 28.1412L9.88649 28.1706L2.61097 33.7812L2.52296 34.0456C6.36608 41.7125 14.287 47 23.4694 47Z" fill="#34A853" />
-                <path d="M10.1212 28.1413C9.62245 26.6725 9.32908 25.1156 9.32908 23.5C9.32908 21.8844 9.62245 20.3275 10.0918 18.8588V18.5356L2.75765 12.8369L2.52296 12.9544C0.909439 16.1269 0 19.7106 0 23.5C0 27.2894 0.909439 30.8731 2.49362 34.0456L10.1212 28.1413Z" fill="#FBBC05" />
-                <path d="M23.4694 9.07688C27.8699 9.07688 30.8622 10.9863 32.5344 12.5725L39.1645 6.11C35.0867 2.32063 29.8061 0 23.4694 0C14.287 0 6.36607 5.2875 2.49362 12.9544L10.0918 18.8588C11.9987 13.1894 17.25 9.07688 23.4694 9.07688Z" fill="#EB4335" />
-              </svg>
-              Sign up with Google
-            </button>
+      <AnimatedBackground intensity="normal" />
+      <div style={{ position:'fixed', top:'-20%', right:'-10%', width:'50vw', height:'60vh', background:'radial-gradient(ellipse, rgba(99,102,241,0.13) 0%, transparent 70%)', pointerEvents:'none', zIndex:1 }} />
+      <div style={{ position:'fixed', bottom:'-20%', left:'-10%', width:'40vw', height:'50vh', background:'radial-gradient(ellipse, rgba(168,85,247,0.09) 0%, transparent 70%)', pointerEvents:'none', zIndex:1 }} />
 
-            <div className="py-3 flex items-center text-xs text-gray-400 uppercase before:flex-1 before:border-t before:border-gray-200 before:me-6 after:flex-1 after:border-t after:border-gray-200 after:ms-6 dark:text-neutral-500 dark:before:border-neutral-600 dark:after:border-neutral-600">Or</div>
-
-            {/* Form */}
-            <form onSubmit={signupForm.handleSubmit} >
-              <div className="grid gap-y-4">
-                {/* Form Group */}
-                <div>
-                  <label htmlFor="name" className="block text-sm mb-2 dark:text-white">Full Name</label>
-                  <div className="relative">
-                    <input type="text"
-                      id="name"
-                      onChange={signupForm.handleChange}
-                      value={signupForm.values.name}
-                      className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600" aria-describedby="email-error" />
-                    <div className="hidden absolute inset-y-0 end-0 pointer-events-none pe-3">
-                      <svg className="size-5 text-red-500" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  {
-                    (signupForm.touched.name && signupForm.errors.name) && (
-
-                      <p className=" text-xs text-red-600 mt-2" id="email-error">{signupForm.errors.name}</p>
-                    )
-                  }
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm mb-2 dark:text-white">Email address</label>
-                  <div className="relative">
-                    <input type="email"
-                      id="email"
-                      onChange={signupForm.handleChange}
-                      value={signupForm.values.email}
-                      className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600" aria-describedby="email-error" />
-                    <div className="hidden absolute inset-y-0 end-0 pointer-events-none pe-3">
-                      <svg className="size-5 text-red-500" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
-                      </svg>
-                    </div>
-                  </div>{
-                    (signupForm.touched.email && signupForm.errors.email) && (
-
-                      <p className=" text-xs text-red-600 mt-2" id="email-error">{signupForm.errors.email}</p>
-                    )}
-
-                </div>
-                {/* End Form Group */}
-
-                {/* Form Group */}
-                <div>
-                  <label htmlFor="password" className="block text-sm mb-2 dark:text-white">Password</label>
-                  <div className="relative">
-                    <input type="password"
-                      id="password"
-                      onChange={signupForm.handleChange}
-                      value={signupForm.values.password}
-                      className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600" aria-describedby="password-error" />
-                    <div className="hidden absolute inset-y-0 end-0 pointer-events-none pe-3">
-                      <svg className="size-5 text-red-500" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  {
-                    (signupForm.touched.password && signupForm.errors.password) && (
-
-                      <p className=" text-xs text-red-600 mt-2" id="email-error">{signupForm.errors.password}</p>
-                    )}
-                </div>
-                {/* End Form Group */}
-
-                {/* Form Group */}
-                <div>
-                  <label htmlFor="confirm-password" className="block text-sm mb-2 dark:text-white">Confirm Password</label>
-                  <div className="relative">
-                    <input type="password"
-                      id="confirmPassword"
-                      onChange={signupForm.handleChange}
-                      value={signupForm.values.confirmPassword}
-                      className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600" aria-describedby="confirm-password-error" />
-                    <div className="hidden absolute inset-y-0 end-0 pointer-events-none pe-3">
-                      <svg className="size-5 text-red-500" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  {
-                    (signupForm.touched.confirmPassword && signupForm.errors.confirmPassword) && (
-
-                      <p className=" text-xs text-red-600 mt-2" id="email-error">{signupForm.errors.confirmPassword}</p>
-                    )}
-                </div>
-                {/* End Form Group */}
-
-                {/* Checkbox */}
-                <div className="flex items-center">
-                  <div className="flex">
-                    <input id="remember-me" name="remember-me" type="checkbox" className="shrink-0 mt-0.5 border-gray-200 rounded-sm text-blue-600 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700 dark:checked:bg-blue-500 dark:checked:border-blue-500 dark:focus:ring-offset-gray-800" />
-                  </div>
-                  <div className="ms-3">
-                    <label htmlFor="remember-me" className="text-sm dark:text-white">I accept the <a className="text-blue-600 decoration-2 hover:underline focus:outline-hidden focus:underline font-medium dark:text-blue-500" href="#">Terms and Conditions</a></label>
-                  </div>
-                </div>
-                {/* End Checkbox */}
-
-                <button type="submit" className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-hidden focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">Sign up</button>
-              </div>
-            </form>
-            {/* End Form */}
-          </div>
+      <div style={{ width:'100%', maxWidth:'480px', position:'relative', zIndex:10 }}>
+        {/* Logo */}
+        <div className="fade-up" style={{ textAlign:'center', marginBottom:'32px' }}>
+          <Link href="/" style={{ display:'inline-flex', alignItems:'center', gap:'10px', textDecoration:'none', marginBottom:'24px' }}>
+            <div style={{ width:'44px', height:'44px', background:'linear-gradient(135deg,#6366f1,#a855f7)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', boxShadow:'0 8px 24px rgba(99,102,241,0.4)' }}>⚡</div>
+            <span style={{ fontSize:'22px', fontWeight:800, color:'#f8fafc', letterSpacing:'-0.02em' }}>StreamKit</span>
+          </Link>
+          <h1 style={{ fontSize:'28px', fontWeight:900, letterSpacing:'-0.03em', marginBottom:'8px' }}>Create your account</h1>
+          <p style={{ color:'#64748b', fontSize:'14px' }}>Join thousands of developers building real-time apps</p>
         </div>
+
+        {/* Card */}
+        <div className="fade-up" style={{ background:'rgba(255,255,255,0.03)', backdropFilter:'blur(24px)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:'24px', padding:'36px', boxShadow:'0 40px 80px rgba(0,0,0,0.4)', animationDelay:'0.1s' }}>
+          {/* Google */}
+          <button type="button" className="google-btn" style={{ marginBottom:'22px' }}>
+            <IconBrandGoogle size={20} />
+            <span>Sign up with Google</span>
+          </button>
+
+          <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'22px' }}>
+            <div style={{ flex:1, height:'1px', background:'rgba(255,255,255,0.07)' }} />
+            <span style={{ fontSize:'11px', color:'#475569', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em' }}>or use email</span>
+            <div style={{ flex:1, height:'1px', background:'rgba(255,255,255,0.07)' }} />
+          </div>
+
+          <form onSubmit={f.handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+            {/* Name */}
+            <div>
+              <label style={{ display:'block', fontSize:'13px', fontWeight:600, color:'#94a3b8', marginBottom:'7px' }}>Full Name</label>
+              <div style={{ position:'relative' }}>
+                <IconUser size={17} style={{ position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'#475569' }} />
+                <input type="text" name="name" placeholder="John Doe"
+                  onChange={f.handleChange} onBlur={f.handleBlur} value={f.values.name}
+                  className={`input-field${f.touched.name && f.errors.name ? ' input-err' : ''}`} />
+              </div>
+              {f.touched.name && f.errors.name && <p style={{ color:'#ef4444', fontSize:'12px', marginTop:'5px' }}>{f.errors.name}</p>}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label style={{ display:'block', fontSize:'13px', fontWeight:600, color:'#94a3b8', marginBottom:'7px' }}>Email Address</label>
+              <div style={{ position:'relative' }}>
+                <IconMail size={17} style={{ position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'#475569' }} />
+                <input type="email" name="email" placeholder="name@example.com"
+                  onChange={f.handleChange} onBlur={f.handleBlur} value={f.values.email}
+                  className={`input-field${f.touched.email && f.errors.email ? ' input-err' : ''}`} />
+              </div>
+              {f.touched.email && f.errors.email && <p style={{ color:'#ef4444', fontSize:'12px', marginTop:'5px' }}>{f.errors.email}</p>}
+            </div>
+
+            {/* Passwords */}
+            <div className="two-col">
+              <div>
+                <label style={{ display:'block', fontSize:'13px', fontWeight:600, color:'#94a3b8', marginBottom:'7px' }}>Password</label>
+                <div style={{ position:'relative' }}>
+                  <IconLock size={17} style={{ position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'#475569' }} />
+                  <input type="password" name="password" placeholder="••••••••"
+                    onChange={f.handleChange} onBlur={f.handleBlur} value={f.values.password}
+                    className={`input-field${f.touched.password && f.errors.password ? ' input-err' : ''}`} />
+                </div>
+              </div>
+              <div>
+                <label style={{ display:'block', fontSize:'13px', fontWeight:600, color:'#94a3b8', marginBottom:'7px' }}>Confirm</label>
+                <div style={{ position:'relative' }}>
+                  <IconCircleCheck size={17} style={{ position:'absolute', left:'14px', top:'50%', transform:'translateY(-50%)', color:'#475569' }} />
+                  <input type="password" name="confirmPassword" placeholder="••••••••"
+                    onChange={f.handleChange} onBlur={f.handleBlur} value={f.values.confirmPassword}
+                    className={`input-field${f.touched.confirmPassword && f.errors.confirmPassword ? ' input-err' : ''}`} />
+                </div>
+              </div>
+            </div>
+
+            {f.touched.password && f.errors.password && <p style={{ color:'#ef4444', fontSize:'12px', marginTop:'-8px' }}>{f.errors.password}</p>}
+            {f.touched.confirmPassword && f.errors.confirmPassword && <p style={{ color:'#ef4444', fontSize:'12px', marginTop:'-8px' }}>{f.errors.confirmPassword}</p>}
+
+            {/* Terms */}
+            <div style={{ display:'flex', alignItems:'flex-start', gap:'10px' }}>
+              <input id="terms" type="checkbox" required style={{ width:'16px', height:'16px', marginTop:'2px', accentColor:'#6366f1', cursor:'pointer', flexShrink:0 }} />
+              <label htmlFor="terms" style={{ fontSize:'12px', color:'#64748b', lineHeight:1.6, cursor:'pointer' }}>
+                I agree to the{' '}
+                <Link href="/terms" style={{ color:'#818cf8', textDecoration:'none', fontWeight:600 }}>Terms of Service</Link>
+                {' '}and{' '}
+                <Link href="/privacy" style={{ color:'#818cf8', textDecoration:'none', fontWeight:600 }}>Privacy Policy</Link>
+              </label>
+            </div>
+
+            <button type="submit" disabled={f.isSubmitting} className="submit-btn" style={{ marginTop:'4px' }}>
+              {f.isSubmitting
+                ? <IconLoaderQuarter size={20} style={{ animation:'spin 1s linear infinite' }} />
+                : <><span>Create Account</span><IconArrowRight size={18} /></>}
+            </button>
+          </form>
+        </div>
+
+        <p className="fade-up" style={{ textAlign:'center', marginTop:'24px', color:'#475569', fontSize:'14px', animationDelay:'0.2s' }}>
+          Already have an account?{' '}
+          <Link href="/login" style={{ color:'#818cf8', fontWeight:700, textDecoration:'none' }}>Sign in</Link>
+        </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Signup;

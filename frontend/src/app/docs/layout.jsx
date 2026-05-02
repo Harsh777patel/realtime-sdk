@@ -1,327 +1,196 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { 
+  IconMessages, 
+  IconVideo, 
+  IconMicrophone, 
+  IconFileText, 
+  IconCode, 
+  IconHistory, 
+  IconBrandGithub,
+  IconSearch,
+  IconCommand,
+  IconChevronRight,
+  IconHelpCircle,
+  IconBrandDiscord,
+  IconSun
+} from "@tabler/icons-react";
 
 const navItems = [
   {
     name: "Chat",
     href: "/docs/chat",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3l2 2 2-2h5a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-        <path d="M4 6h8M4 9h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      </svg>
-    ),
+    icon: <IconMessages size={18} />,
     color: "#6366f1",
   },
   {
     name: "Video",
     href: "/docs/video",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="1" y="3.5" width="10" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
-        <path d="M11 6.5l4-2v7l-4-2" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-      </svg>
-    ),
+    icon: <IconVideo size={18} />,
     color: "#10b981",
   },
   {
     name: "Audio",
     href: "/docs/audio",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M8 1a3 3 0 0 1 3 3v4a3 3 0 0 1-6 0V4a3 3 0 0 1 3-3Z" stroke="currentColor" strokeWidth="1.2"/>
-        <path d="M2 7a6 6 0 0 0 12 0M8 13v2M6 15h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      </svg>
-    ),
+    icon: <IconMicrophone size={18} />,
     color: "#f59e0b",
   },
 ];
 
 const resources = [
-  { name: "API Reference", href: "/docs/api" },
-  { name: "Examples", href: "/examples" },
-  { name: "Changelog", href: "/changelog" },
-  { name: "GitHub", href: "https://github.com" },
+  { name: "API Reference", href: "/docs/api", icon: <IconFileText size={16} /> },
+  { name: "Examples", href: "/examples", icon: <IconCode size={16} /> },
+  { name: "Changelog", href: "/changelog", icon: <IconHistory size={16} /> },
+  { name: "GitHub", href: "https://github.com", icon: <IconBrandGithub size={16} /> },
 ];
 
 export default function DocsLayout({ children }) {
   const pathname = usePathname();
 
   return (
-    <div style={{ fontFamily: "'DM Mono', 'Fira Code', monospace" }}>
+    <div className="bg-[#09090b] text-[#fafafa] min-h-screen flex font-sans">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Outfit', sans-serif; }
+        .mono { font-family: 'DM Mono', monospace; }
 
-        *, *::before, *::after { box-sizing: border-box; }
-
-        .docs-layout {
-          display: flex;
-          min-height: 100vh;
-          background: #09090b;
-          color: #fafafa;
-        }
-
-        .sidebar {
-          width: 240px;
-          min-height: 100vh;
-          background: #09090b;
-          border-right: 1px solid #1c1c1f;
-          display: flex;
-          flex-direction: column;
-          padding: 0;
+        .docs-sidebar {
+          width: 280px;
+          height: 100vh;
           position: fixed;
           top: 0;
           left: 0;
-          bottom: 0;
-          overflow-y: auto;
-        }
-
-        .sidebar-logo {
-          padding: 20px 20px 16px;
-          border-bottom: 1px solid #1c1c1f;
+          border-right: 1px solid rgba(255,255,255,0.05);
+          background: #09090b;
           display: flex;
-          align-items: center;
-          gap: 10px;
-          text-decoration: none;
-        }
-
-        .logo-mark {
-          width: 28px;
-          height: 28px;
-          background: #6366f1;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          font-size: 14px;
-        }
-
-        .logo-text {
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 500;
-          font-size: 15px;
-          color: #fafafa;
-          letter-spacing: -0.02em;
-        }
-
-        .version-badge {
-          font-family: 'DM Mono', monospace;
-          font-size: 10px;
-          color: #6366f1;
-          background: rgba(99,102,241,0.1);
-          border: 1px solid rgba(99,102,241,0.25);
-          padding: 1px 6px;
-          border-radius: 4px;
-          margin-left: auto;
-        }
-
-        .sidebar-section {
-          padding: 20px 12px 12px;
-        }
-
-        .sidebar-section-label {
-          font-family: 'DM Mono', monospace;
-          font-size: 10px;
-          color: #3f3f46;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          padding: 0 8px;
-          margin-bottom: 8px;
-        }
-
-        .nav-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 10px;
-          border-radius: 8px;
-          text-decoration: none;
-          color: #71717a;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          font-weight: 400;
-          transition: background 0.15s, color 0.15s;
-          margin-bottom: 2px;
-          position: relative;
-        }
-        .nav-item:hover { background: #111113; color: #d4d4d8; }
-        .nav-item.active { background: #111113; color: #fafafa; }
-
-        .nav-item-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
-          flex-shrink: 0;
-          opacity: 0;
-          transition: opacity 0.15s;
-        }
-        .nav-item.active .nav-item-dot { opacity: 1; }
-
-        .resource-link {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 10px;
-          border-radius: 6px;
-          text-decoration: none;
-          color: #52525b;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 12px;
-          font-weight: 300;
-          transition: color 0.15s;
-          margin-bottom: 1px;
-        }
-        .resource-link:hover { color: #a1a1aa; }
-
-        .sidebar-bottom {
-          margin-top: auto;
-          padding: 16px 12px;
-          border-top: 1px solid #1c1c1f;
+          flex-direction: column;
+          z-index: 40;
         }
 
         .docs-main {
-          margin-left: 240px;
+          margin-left: 280px;
           flex: 1;
           display: flex;
           flex-direction: column;
+          min-width: 0;
         }
 
-        .docs-topbar {
-          border-bottom: 1px solid #1c1c1f;
-          padding: 14px 48px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: #09090b;
-          position: sticky;
-          top: 0;
-          z-index: 50;
-        }
-
-        .breadcrumb {
-          font-family: 'DM Mono', monospace;
-          font-size: 12px;
-          color: #52525b;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .breadcrumb-sep { color: #27272a; }
-        .breadcrumb-current { color: #a1a1aa; }
-
-        .search-bar {
-          background: #111113;
-          border: 1px solid #1c1c1f;
-          border-radius: 8px;
-          padding: 6px 14px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-family: 'DM Mono', monospace;
-          font-size: 12px;
-          color: #52525b;
-          cursor: pointer;
-          transition: border-color 0.15s;
-          min-width: 200px;
-        }
-        .search-bar:hover { border-color: #27272a; }
-
-        .docs-content {
-          padding: 52px 48px;
-          max-width: 820px;
+        .docs-content-container {
+          padding: 64px;
           width: 100%;
-          animation: fadeUp 0.4s ease both;
+          max-width: 1200px;
+          margin: 0 auto;
         }
 
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
+        @media (max-width: 1024px) {
+          .docs-sidebar { display: none; }
+          .docs-main { margin-left: 0; }
+          .docs-content-container { padding: 32px; }
+        }
+
+        .nav-link-active {
+          background: rgba(99,102,241,0.1);
+          color: #818cf8 !important;
+          border-right: 2px solid #6366f1;
         }
       `}</style>
 
-      <div className="docs-layout">
-        {/* SIDEBAR */}
-        <aside className="sidebar">
-          <Link href="/" className="sidebar-logo">
-            <div className="logo-mark">⚡</div>
-            <span className="logo-text">StreamKit</span>
-            <span className="version-badge">v2.4</span>
-          </Link>
-
-          {/* Main nav */}
-          <div className="sidebar-section">
-            <div className="sidebar-section-label">// components</div>
-            {navItems.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link key={item.href} href={item.href} className={`nav-item ${active ? "active" : ""}`}>
-                  <span style={{ color: active ? item.color : "inherit", display: "flex" }}>
-                    {item.icon}
-                  </span>
-                  {item.name}
-                  <span className="nav-item-dot" style={{ background: item.color, marginLeft: "auto" }} />
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="sidebar-section" style={{ paddingTop: 8 }}>
-            <div className="sidebar-section-label">// resources</div>
-            {resources.map((r) => (
-              <Link key={r.href} href={r.href} className="resource-link">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                {r.name}
-              </Link>
-            ))}
-          </div>
-
-          <div className="sidebar-bottom">
-            <div style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#818cf8", fontWeight: 500, marginBottom: 4 }}>
-                Need help?
-              </div>
-              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#52525b", fontWeight: 300, lineHeight: 1.5, marginBottom: 10 }}>
-                Join our Discord for real-time support.
-              </div>
-              <Link href="/discord" style={{
-                fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: "#818cf8",
-                textDecoration: "none", display: "flex", alignItems: "center", gap: 4,
-              }}>
-                Join Discord →
-              </Link>
-            </div>
-          </div>
-        </aside>
-
-        {/* MAIN */}
-        <div className="docs-main">
-          <div className="docs-topbar">
-            <div className="breadcrumb">
-              <span>docs</span>
-              <span className="breadcrumb-sep">/</span>
-              <span className="breadcrumb-current">
-                {pathname?.split("/").pop() || "home"}
-              </span>
-            </div>
-            <div className="search-bar">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.2"/>
-                <path d="M9 9l2.5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
-              Search docs...
-              <span style={{ marginLeft: "auto", background: "#1c1c1f", borderRadius: 4, padding: "1px 6px", fontSize: 10, color: "#3f3f46" }}>⌘K</span>
-            </div>
-          </div>
-
-          <main className="docs-content">
-            {children}
-          </main>
+      {/* SIDEBAR */}
+      <aside className="docs-sidebar">
+        <div className="p-6 border-b border-white/5 flex items-center gap-3">
+          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">⚡</div>
+          <span className="font-bold text-lg tracking-tight">StreamKit Docs</span>
         </div>
+
+        <div className="flex-1 overflow-y-auto py-6 px-4">
+          <div className="mb-8">
+            <h3 className="mono text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-4 px-4">// Components</h3>
+            <div className="space-y-1">
+              {navItems.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <Link 
+                    key={item.href} 
+                    href={item.href} 
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${active ? 'bg-indigo-600/10 text-indigo-400' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    <span style={{ color: active ? item.color : 'inherit' }}>{item.icon}</span>
+                    {item.name}
+                    {active && <IconChevronRight size={14} className="ml-auto" />}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="mono text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-4 px-4">// Resources</h3>
+            <div className="space-y-1">
+              {resources.map((item) => (
+                <Link 
+                  key={item.href} 
+                  href={item.href} 
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-zinc-500 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  {item.icon}
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-white/5">
+          <div className="p-4 rounded-xl bg-indigo-600/5 border border-indigo-600/10">
+            <div className="flex items-center gap-2 text-indigo-400 mb-2">
+              <IconHelpCircle size={16} />
+              <span className="text-xs font-bold uppercase tracking-wider">Help</span>
+            </div>
+            <p className="text-[11px] text-zinc-500 leading-relaxed mb-3">Stuck? Join our community for help.</p>
+            <a href="/discord" className="flex items-center justify-center gap-2 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold rounded-lg transition-all">
+              <IconBrandDiscord size={14} />
+              Join Discord
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <div className="docs-main">
+        <header className="h-16 border-b border-white/5 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-30 px-8 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-zinc-500 mono">
+            <Link href="/" className="hover:text-white transition-colors">home</Link>
+            <IconChevronRight size={14} />
+            <Link href="/docs" className="hover:text-white transition-colors">docs</Link>
+            <IconChevronRight size={14} />
+            <span className="text-white font-medium">{pathname?.split("/").pop()}</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="relative group hidden sm:block">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-zinc-500 text-sm w-64 hover:border-white/20 transition-all cursor-pointer">
+                <IconSearch size={16} />
+                <span>Search docs...</span>
+                <div className="ml-auto flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[10px]">
+                  <IconCommand size={10} />
+                  <span>K</span>
+                </div>
+              </div>
+            </div>
+            
+            <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-zinc-400 hover:text-white transition-all">
+              <IconSun size={18} />
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="docs-content-container animate-fadeIn">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

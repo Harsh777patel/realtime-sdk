@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect, useState, useRef } from "react";
 import io from "socket.io-client";
 import axios from "axios";
@@ -7,22 +8,19 @@ const Chat = ({
   apiKey,
   userId,
   name = "Guest",
-  email,
   serverUrl = "http://localhost:5000",
   roomId = "default",
-  theme = "light",
-  primaryColor = "#667eea",
-  docsUrl = "https://yourplatform.com/docs"
+  accentColor = "#6366f1"
 }) => {
   const [apiKeyError, setApiKeyError] = useState(null);
   const [socket, setSocket] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    const saved = sessionStorage.getItem(`sk_chat_${roomId}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [hoveredMessageIdx, setHoveredMessageIdx] = useState(null);
   const chatEndRef = useRef(null);
 
-  // Validate API Key and connect socket
   useEffect(() => {
     const verifyKeyAndConnect = async () => {
       if (!apiKey) {
@@ -31,204 +29,110 @@ const Chat = ({
       }
 
       try {
-        await axios.post(
-          `${serverUrl}/api/keys/validate-key`,
-          {},
-          {
-            headers: {
-              "x-api-key": apiKey,
-            },
-          }
-        );
+        await axios.post(`${serverUrl}/api/keys/validate-key`, {}, {
+          headers: { "x-api-key": apiKey }
+        });
 
         const socketInstance = io(serverUrl, {
-          auth: {
-            apiKey,
-            userId,
-            name,
-            roomId,
-          },
+          auth: { apiKey, userId, name, roomId }
         });
 
         setSocket(socketInstance);
       } catch (err) {
-        setApiKeyError("Invalid API key");
+        setApiKeyError("Invalid or Expired API key");
       }
     };
 
     verifyKeyAndConnect();
   }, [apiKey, serverUrl, userId, name, roomId]);
 
-  // Join room after socket connect
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit("join-room", {
-      roomId,
-      userId,
-      name,
-    });
-
     socket.on("rec-message", (msg) => {
-      const time = new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      setMessages((prev) => [
-        ...prev,
-        { text: msg, type: "received", time, read: false },
-      ]);
+      setMessages((prev) => [...prev, { 
+        text: msg, 
+        type: "received", 
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      }]);
     });
 
-    return () => {
-      socket.off("rec-message");
-    };
+    return () => socket.off("rec-message");
   }, [socket]);
 
-  // Auto scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    sessionStorage.setItem(`sk_chat_${roomId}`, JSON.stringify(messages));
+  }, [messages, roomId]);
 
   const sendMessage = (e) => {
     e.preventDefault();
-    if (!socket) return;
-
-    if (input.trim()) {
-      const time = new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
+    if (input.trim() && socket) {
       socket.emit("send-message", input);
-
-      setMessages((prev) => [
-        ...prev,
-        { text: input, type: "sent", time, read: true },
-      ]);
-
+      setMessages((prev) => [...prev, { 
+        text: input, 
+        type: "sent", 
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      }]);
       setInput("");
     }
   };
 
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-    setIsTyping(e.target.value.length > 0);
-  };
-
-  const getAvatarColor = (type) => {
-    return type === "sent" ? primaryColor : "#764ba2";
-  };
-
-  const getInitial = (type) => {
-    return type === "sent" ? name[0] : "S";
-  };
-
-  const isConsecutiveMessage = (currentIdx) => {
-    if (currentIdx === 0) return false;
-    return messages[currentIdx].type === messages[currentIdx - 1].type;
-  };
-
-  // API key error screen
-  if (apiKeyError) {
-    return (
-      <div style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f3f4f6",
-        fontFamily: "Segoe UI"
-      }}>
-        <div style={{
-          background: "#fff",
-          padding: "30px",
-          borderRadius: "10px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-          maxWidth: "500px",
-          textAlign: "center"
-        }}>
-          <h2 style={{ color: "#ef4444" }}>
-            API Key Not Configured
-          </h2>
-
-          <p>This chat widget requires an API key.</p>
-
-          <div style={{
-            background: "#111827",
-            color: "#10b981",
-            padding: "15px",
-            borderRadius: "8px",
-            textAlign: "left",
-            fontSize: "13px"
-          }}>
-{`<script src="https://yourplatform.com/sdk.js"></script>
-<script>
-RealtimeSDK.init({
-  apiKey: "YOUR_API_KEY",
-  userId: "USER_ID",
-  name: "John Doe"
-});
-</script>`}
-          </div>
-
-          <p style={{ marginTop: "20px" }}>
-            See documentation:
-          </p>
-
-          <a href={docsUrl} target="_blank" rel="noreferrer">
-            Integration Documentation →
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-return (
-  <div className="chat-container">
-    
-    {/* Header */}
-    <div className="chat-header">
-      <div>
-        <h3>{name}</h3>
-        <small className="status">● Online</small>
-      </div>
-      <div className="chat-actions">
-        <button>📞</button>
-        <button>📹</button>
-      </div>
+  if (apiKeyError) return (
+    <div className="sdk-error-box">
+      <span className="error-icon">⚠️</span>
+      <h4>SDK Config Error</h4>
+      <p>{apiKeyError}</p>
+      <code>Check your StreamKit dashboard for the correct key.</code>
     </div>
+  );
 
-    {/* Messages */}
-    <div className="chat-messages">
-      {messages.map((msg, idx) => (
-        <div
-          key={idx}
-          className={`chat-row ${
-            msg.type === "sent" ? "sent" : "received"
-          }`}
-        >
-          <div className="chat-bubble">
-            {msg.text}
-            <div className="chat-time">{msg.time}</div>
+  return (
+    <div className="sk-chat-widget">
+      <div className="sk-chat-header" style={{ borderTopColor: accentColor }}>
+        <div className="sk-user-info">
+          <div className="sk-avatar-mini" style={{ background: accentColor }}>{name[0]}</div>
+          <div>
+            <div className="sk-user-name">{name}</div>
+            <div className="sk-status"><span className="sk-dot-online"></span> Support Sync</div>
           </div>
         </div>
-      ))}
-      <div ref={chatEndRef} />
-    </div>
+      </div>
 
-    {/* Input */}
-    <div className="chat-input">
-      <input
-        value={input}
-        onChange={handleInputChange}
-        placeholder="Type a message..."
-      />
-      <button onClick={sendMessage}>Send</button>
+      <div className="sk-message-area">
+        {messages.length === 0 && (
+          <div className="sk-empty-state">
+             <div className="sk-empty-icon">🗨️</div>
+             <p>No messages yet. Start the conversation!</p>
+          </div>
+        )}
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`sk-msg-row ${msg.type}`}>
+            {msg.type === "received" && (
+              <div className="sk-avatar" style={{ background: "linear-gradient(135deg, #f59e0b, #ec4899)" }}>👥</div>
+            )}
+            <div className="sk-bubble">
+              <div className="sk-text">{msg.text}</div>
+              <div className="sk-time">{msg.time}</div>
+            </div>
+          </div>
+        ))}
+        <div ref={chatEndRef} />
+      </div>
+
+      <form className="sk-input-area" onSubmit={sendMessage}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Write something..."
+          className="sk-input"
+        />
+        <button type="submit" className="sk-send-btn" style={{ background: accentColor }}>
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        </button>
+      </form>
     </div>
-  </div>
-);
+  );
 };
 
 export default Chat;
