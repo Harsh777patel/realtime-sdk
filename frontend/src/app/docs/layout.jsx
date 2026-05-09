@@ -101,7 +101,7 @@ export default function DocsLayout({ children }) {
       <aside className="docs-sidebar">
         <div className="p-6 border-b border-white/5 flex items-center gap-3">
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">⚡</div>
-          <span className="font-bold text-lg tracking-tight">StreamKit Docs</span>
+          <span className="font-bold text-lg tracking-tight">Vellix Docs</span>
         </div>
 
         <div className="flex-1 overflow-y-auto py-6 px-4">
